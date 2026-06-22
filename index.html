@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alena: Potvrzení zadání časů</title>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --grey: #64748b;
+            --grey-hover: #475569;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 16px;
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--border);
+            margin: 16px 0;
+            border: none;
+        }
+
+        /* Empty state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .info-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(59, 130, 246, 0.2);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .empty-text {
+            font-size: 16px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Cards list */
+        .time-card {
+            background-color: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            transition: opacity 0.3s ease;
+        }
+
+        .time-card-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .status-badge {
+            font-weight: bold;
+        }
+        .status-success { color: var(--success); }
+        .status-danger { color: var(--danger); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            color: white;
+        }
+
+        .btn-blue { background-color: var(--primary); }
+        .btn-blue:hover:not(:disabled) { background-color: var(--primary-hover); }
+        
+        .btn-green { background-color: var(--success); }
+        .btn-green:hover { background-color: var(--success-hover); }
+
+        .btn-grey { background-color: var(--grey); }
+        .btn-grey:hover { background-color: var(--grey-hover); }
+
+        .btn:disabled {
+            background-color: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .log-list {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .log-row {
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .log-row.success { color: var(--success); }
+        .log-row.danger { color: var(--danger); }
+
+        /* Form elements */
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            background-color: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 15px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 420px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.2s ease;
+        }
+
+        .modal-overlay.open .modal-box {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+
+        .modal-msg {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            color: #e2e8f0;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Alena: Potvrzení zadání časů nočních her</h1>
+        <div class="divider"></div>
+
+        <div id="content-container">
+            </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-password">
+        <div class="modal-box">
+            <div class="modal-title">Zadejte heslo:</div>
+            <input type="text" id="input-user-password" class="form-control" autocomplete="off">
+            <div class="modal-buttons">
+                <button class="btn btn-grey" id="btn-pwd-storno">Storno</button>
+                <button class="btn btn-green" id="btn-pwd-confirm">Potvrdit</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-info">
+        <div class="modal-box">
+            <div class="modal-msg" id="modal-info-text"></div>
+            <button class="btn btn-blue" id="btn-info-close">Zavřít</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5vJGU5C0ylCWASHNJnLvgx-hzX-uXwDY",
+            authDomain: "nocni-hry-casy.firebaseapp.com",
+            databaseURL: "https://nocni-hry-casy-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "nocni-hry-casy",
+            storageBucket: "nocni-hry-casy.firebasestorage.app",
+            messagingSenderId: "387812121328",
+            appId: "1:387812121328:web:16c3fdb37aac11ad1c8035"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let dbData = null;
+        let activeKeyToProcess = null;
+
+        const contentContainer = document.getElementById('content-container');
+
+        onValue(ref(db, '/'), (snapshot) => {
+            dbData = snapshot.val();
+            renderUserScreen();
+        });
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('open');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+
+        function getSortedTimeKeys(dataObj) {
+            if (!dataObj) return [];
+            return Object.keys(dataObj).filter(k => k.includes('_')).sort((a, b) => {
+                const [hA, mA] = a.split('_').map(Number);
+                const [hB, mB] = b.split('_').map(Number);
+                return (hA * 60 + mA) - (hB * 60 + mB);
+            });
+        }
+
+        // Výpočet časového rozdílu v minutách s ošetřením přechodu přes půlnoc
+        function getTimeDifferenceInMinutes(targetTimeStr) {
+            const now = new Date();
+            const [tH, tM] = targetTimeStr.split(':').map(Number);
+            
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            const targetMinutes = tH * 60 + tM;
+            
+            let diff = currentMinutes - targetMinutes; // Kladné = pozdě, záporné = brzy
+            
+            if (diff > 720) diff -= 1440;
+            if (diff < -720) diff += 1440;
+            
+            return diff;
+        }
+
+        function renderUserScreen() {
+            contentContainer.innerHTML = '';
+
+            if (!dbData || Object.keys(dbData).length === 0) {
+                // 1) Databáze je prázdná
+                contentContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="info-circle">i</div>
+                        <div class="empty-text">Zatím není vytvořena žádná relace...</div>
+                    </div>
+                `;
+            } else {
+                // 2) Databáze obsahuje data
+                const sortedKeys = getSortedTimeKeys(dbData);
+                
+                sortedKeys.forEach((key) => {
+                    const itemData = dbData[key];
+                    const displayTime = key.replace('_', ':');
+
+                    const card = document.createElement('div');
+                    card.className = 'time-card';
+
+                    // Zjištění stavů ikon
+                    let iconSpan = '';
+                    let isLate = false;
+                    Object.keys(itemData).forEach(k => {
+                        if (k.startsWith('pozde')) isLate = true;
+                    });
+
+                    if (itemData.provedeno === 1) {
+                        iconSpan = '<span class="status-badge status-success">✓</span>';
+                    } else if (isLate) {
+                        iconSpan = '<span class="status-badge status-danger">✗</span>';
+                    }
+
+                    // Nadpis času
+                    const header = document.createElement('div');
+                    header.className = 'time-card-title';
+                    header.innerHTML = `${iconSpan} Čas: ${displayTime}`;
+                    card.appendChild(header);
+
+                    // Tlačítko "Provést nyní"
+                    const btnPerform = document.createElement('button');
+                    btnPerform.className = 'btn btn-blue';
+                    btnPerform.innerText = 'Provést nyní';
+                    
+                    // Blokování tlačítek: aktivní je pouze ten, co má provedeno === 0
+                    if (itemData.provedeno !== 0) {
+                        btnPerform.disabled = true;
+                        card.classList.add('locked');
+                    }
+
+                    btnPerform.onclick = () => {
+                        activeKeyToProcess = key;
+                        document.getElementById('input-user-password').value = '';
+                        openModal('modal-password');
+                    };
+                    card.appendChild(btnPerform);
+
+                    // List operací (logy) na klientské stránce
+                    const logList = document.createElement('div');
+                    logList.className = 'log-list';
+
+                    const itemKeys = Object.keys(itemData).sort();
+                    itemKeys.forEach((subKey) => {
+                        if (subKey.startsWith('incor')) {
+                            const logRow = document.createElement('div');
+                            logRow.className = 'log-row danger';
+                            logRow.innerHTML = `✗ Neplatné heslo - uživatel AR. Zkus to znovu.`;
+                            logList.appendChild(logRow);
+                        }
+                        if (subKey.startsWith('brzy')) {
+                            const logRow = document.createElement('div');
+                            logRow.className = 'log-row danger';
+                            logRow.innerHTML = `✗ Příliš brzy! Nepotvrzeno, zkus to později.`;
+                            logList.appendChild(logRow);
+                        }
+                        if (subKey.startsWith('pozde')) {
+                            const logRow = document.createElement('div');
+                            logRow.className = 'log-row danger';
+                            logRow.innerHTML = `✗ Bohužel, pozdě. Více štěstí příště!`;
+                            logList.appendChild(logRow);
+                        }
+                    });
+
+                    if (itemData.zadal && itemData.real_cas) {
+                        const logRow1 = document.createElement('div');
+                        logRow1.className = 'log-row success';
+                        logRow1.innerHTML = `✓ Potvrdil: ${itemData.zadal}`;
+                        logList.appendChild(logRow1);
+
+                        const logRow2 = document.createElement('div');
+                        logRow2.className = 'log-row success';
+                        logRow2.innerHTML = `✓ dokončeno: ${itemData.real_cas}`;
+                        logList.appendChild(logRow2);
+                    }
+
+                    if (logList.children.length > 0) {
+                        card.appendChild(logList);
+                    }
+
+                    contentContainer.appendChild(card);
+                });
+            }
+        }
+
+        // Storno zadání hesla
+        document.getElementById('btn-pwd-storno').onclick = () => {
+            closeModal('modal-password');
+        };
+
+        // Potvrzení zadání hesla a logika ověření času
+        document.getElementById('btn-pwd-confirm').onclick = async () => {
+            const enteredPwd = document.getElementById('input-user-password').value.trim();
+            closeModal('modal-password');
+
+            if (!activeKeyToProcess || !dbData[activeKeyToProcess]) return;
+
+            const targetItem = dbData[activeKeyToProcess];
+            const correctPwd = targetItem.heslo;
+
+            // Kontrola hesla (pokud je v DB 'none', bere se jako prázdné nebo 'none')
+            const isPasswordMatch = (correctPwd === 'none' && enteredPwd === '') || 
+                                    (correctPwd === enteredPwd);
+
+            if (!isPasswordMatch) {
+                // Heslo nesouhlasí
+                const timestamp = Date.now();
+                const updates = {};
+                updates[`/${activeKeyToProcess}/incor_${timestamp}`] = "error";
+                await update(ref(db, '/'), updates);
+
+                document.getElementById('modal-info-text').innerText = "Your password is incorrect! Nebyla jsi autorizována.";
+                openModal('modal-info');
+                return;
+            }
+
+            // Heslo souhlasí -> ověříme časové rozmezí
+            const displayTimeStr = activeKeyToProcess.replace('_', ':');
+            const diffInMinutes = getTimeDifferenceInMinutes(displayTimeStr);
+
+            const timestamp = Date.now();
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+            if (diffInMinutes < -5) {
+                // Příliš brzy
+                const updates = {};
+                updates[`/${activeKeyToProcess}/brzy_${timestamp}`] = "early";
+                await update(ref(db, '/'), updates);
+
+                document.getElementById('modal-info-text').innerText = "Je příliš brzy. Nyní to ještě nepůjde. Podstatné je, že jsi čas nepropásla a teprve bude a máš šanci na plný počet bodů, stačit to potvrdit ve správný čas!";
+                openModal('modal-info');
+
+            } else if (diffInMinutes > 5) {
+                // Příliš pozdě
+                const updates = {};
+                updates[`/${activeKeyToProcess}/pozde_${timestamp}`] = "late";
+                updates[`/${activeKeyToProcess}/provedeno`] = 2; // Označíme jako neúspěšné/uzamčené
+
+                // Odemkneme další čas v pořadí
+                const sortedKeys = getSortedTimeKeys(dbData);
+                const currentIndex = sortedKeys.indexOf(activeKeyToProcess);
+                if (currentIndex !== -1 && currentIndex < sortedKeys.length - 1) {
+                    const nextKey = sortedKeys[currentIndex + 1];
+                    if (dbData[nextKey].provedeno === 5) {
+                        updates[`/${nextKey}/provedeno`] = 0;
+                    }
+                }
+
+                await update(ref(db, '/'), updates);
+
+                document.getElementById('modal-info-text').innerText = "Je mi líto. Tohle bylo už pozdě a nejde to zachránit. Pro kladné body se snaž u jiných časů.";
+                openModal('modal-info');
+
+            } else {
+                // Správný čas (v toleranci +- 5 minut)
+                const updates = {};
+                updates[`/${activeKeyToProcess}/provedeno`] = 1;
+                updates[`/${activeKeyToProcess}/zadal`] = "AR";
+                updates[`/${activeKeyToProcess}/real_cas`] = timeStr;
+
+                // Odemkneme další čas v pořadí
+                const sortedKeys = getSortedTimeKeys(dbData);
+                const currentIndex = sortedKeys.indexOf(activeKeyToProcess);
+                if (currentIndex !== -1 && currentIndex < sortedKeys.length - 1) {
+                    const nextKey = sortedKeys[currentIndex + 1];
+                    if (dbData[nextKey].provedeno === 5) {
+                        updates[`/${nextKey}/provedeno`] = 0;
+                    }
+                }
+
+                await update(ref(db, '/'), updates);
+            }
+        };
+
+        // Zavření info modálního okna
+        document.getElementById('btn-info-close').onclick = () => {
+            closeModal('modal-info');
+        };
+    </script>
+</body>
+</html>
